@@ -3,10 +3,7 @@ var readline = require('readline');
 var google = require('googleapis');
 var googleAuth = require('google-auth-library');
 
-var SCOPES = ['https://www.googleapis.com/auth/drive.file', 
-    'https://www.googleapis.com/auth/drive.apps.readonly',
-    'https://www.googleapis.com/auth/drive.metadata', 
-    'https://www.googleapis.com/auth/drive.metadata.readonly'];
+var SCOPES = ['https://www.googleapis.com/auth/drive'];
 var TOKEN_DIR = (process.env.HOME || process.env.HOMEPATH ||
     process.env.USERPROFILE) + '/.credentials/';
 
@@ -99,14 +96,11 @@ function storeToken(token) {
     console.log('Token stored to ' + TOKEN_PATH);
 }
 
-/**
- * Lists the names and IDs of up to 10 files.
- *
- * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
- */
+
+
+var service = google.drive('v2');
 
 var rootDirName = 'apiTest';
-
 
 var templateObj = {};
 var contractObj = {};
@@ -114,24 +108,27 @@ var contractObj = {};
 var templateDirName = 'template';
 var contractDirName = 'contract';
 
+var templateChildrens = [];
+var contractChildrens = [];
+
 var tmpFile = {};
 
+
 // works - file listing with query
-function listFiles(auth, query) {
-    var service = google.drive('v2');
+function getAllFiles(auth, query, callback) {
     service.files.list({
         auth: auth,
         q: query
     }, function (err, response) {
+        var resp = {error: null, success: null};
         if (err) {
             console.log('The API returned an error: ' + err);
-            return;
-        }
-        var items = response.items;
-        if (items.length == 0) {
-            console.log('No files found.');
+            resp.error = err;
         } else {
-            
+            var items = response.items;
+            console.log(items.length + ' files found.');
+            resp.success = items;
+
             for (var i = 0; i < items.length; i++) {
                 var item = items[i];
                 
@@ -145,21 +142,52 @@ function listFiles(auth, query) {
                     console.log("Contract Folder found!");
                 }
 
-                if (item.title == 'excel1') {
-                    tmpFile = item;
-                }
-                
-                
-                if (contractObj.id != undefined && templateObj.id != undefined && tmpFile.id != undefined) {
-                    
-                    copyFile(auth, tmpFile.id, contractObj.id, "test123");
-
+                if (contractObj.id != undefined && templateObj.id != undefined) {
                     break;
                 }
             }
-
-            //addFileInFolder(auth, contractObj.id, 'test-mite');
         }
+        callback(resp);
+    });
+}
+
+function getTemplateChildrens(auth, parentId) {
+    getChildrens(auth, parentId, function (res) {
+        if (res.error != null) { 
+        
+        } else { 
+            templateChildrens = res.success;
+            console.log('template childrens found.');
+        }
+    });
+}
+
+function getContractChildrens(auth, parentId) {
+    getChildrens(auth, parentId, function (res) {
+        if (res.error != null) { 
+        
+        } else {
+            contractChildrens = res.success;
+            console.log('contract childrens found.');
+        }
+    });
+}
+
+// works - get children by parent id
+function getChildrens(auth, parentId, callback) {
+    service.children.list({
+        auth: auth,
+        folderId: parentId
+    }, function (err, response) {
+        var resp = {error: null, success: null};
+        if (err) {
+            console.log('The API returned an error: ' + err);
+            resp.error = err;
+        } else {
+            console.log(items.length + ' children found.');
+            resp.success = response;
+        }
+        callback(resp);
     });
 }
 
@@ -167,7 +195,6 @@ function listFiles(auth, query) {
 function addFileInFolder(auth, parentId, folderName) {
     var body = { title: folderName, mimeTyle: 'application/vnd.google-apps.folder', parents: [{ id: parentId }] };
 
-    var service = google.drive('v2');
     service.files.insert({
         auth: auth,
         resource: body
@@ -175,14 +202,14 @@ function addFileInFolder(auth, parentId, folderName) {
         if (err) {
             console.log('The API returned an error: ' + err);
             return;
+        } else { 
+            console.log('file created.');
         }
-
     });
 }
 
 // todo
 function updateFolderMetadata(auth, fileId) {
-    var service = google.drive('v2');
     service.files.get({
         auth: auth,
         fileId: fileId
@@ -209,7 +236,6 @@ function updateFolderMetadata(auth, fileId) {
 
 // works - copy file from destination with specific filename
 function copyFile(auth, sourceFileId, targetFileId, fileName) {
-    var service = google.drive('v2');
     getFileById(auth, sourceFileId, function (response) {
         if (response.error != null) { 
         
@@ -232,9 +258,28 @@ function copyFile(auth, sourceFileId, targetFileId, fileName) {
     });
 }
 
-// works - get file by id
+// works - get file object - returns only basic data
+function getChildrenByParentAndId(auth, parentId, childId, callback) {
+    service.children.get({
+        auth: auth,
+        folderId: parentId,
+        childId: childId
+    }, function (err, response) {
+        var resp = { error: null, success: null };
+        if (err) {
+            console.log('The API returned an error: ' + err);
+            resp.error = err;
+        } else {
+            resp.success = response;
+            console.log("Children by id found!");
+        }
+        
+        callback(resp);
+    });
+}
+
+// works - get file object by id
 function getFileById(auth, fileId, callback) {
-    var service = google.drive('v2');
     service.files.get({
         auth: auth,
         fileId: fileId
@@ -252,25 +297,21 @@ function getFileById(auth, fileId, callback) {
     });
 }
 
-// todo
-function listFilesInFolder(auth, folderId) {
-    var service = google.drive('v2');
-    service.files.get({
-        auth: auth,
-        fileId: "0BwinOV1C0lyNa2IydUEtb2lQeWc"
-    }, function (err, response) {
-        if (err) {
-            console.log('The API returned an error: ' + err);
-            return;
-        }
-        var items = response.items;
-
-    });
-}
-
 function onAPIReady(auth) {
+
     var query = "mimeType='application/vnd.google-apps.folder'";
-    listFiles(auth, "");
+    
+    query = "";
+
+    getAllFiles(auth, query, function (res) {
+        if (res.error != null) { 
+        
+        } else {
+            getTemplateChildrens(auth, templateObj.id);
+            getContractChildrens(auth, templateObj.id);
+        }
+    });
+
 
     //addFileInFolder(auth, 0);
 
