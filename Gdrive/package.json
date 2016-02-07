@@ -1,0 +1,14 @@
+{
+  "name": "Gdrive",
+  "version": "0.0.0",
+  "description": "Gdrive",
+  "main": "app.js",
+  "author": {
+    "name": "stoja",
+    "email": ""
+  },
+  "dependencies": {
+    "google-auth-library": "^0.9.7",
+    "googleapis": "^2.1.7"
+  }
+}
