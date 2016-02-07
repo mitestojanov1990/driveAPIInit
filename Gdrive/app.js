@@ -22,7 +22,7 @@ fs.readFile('client_secret.json', function processClientSecrets(err, content) {
     }
     // Authorize a client with the loaded credentials, then call the
     // Drive API.
-    authorize(JSON.parse(content), whenReady);
+    authorize(JSON.parse(content), onAPIReady);
 });
 
 /**
@@ -116,11 +116,12 @@ var contractDirName = 'contract';
 
 var tmpFile = {};
 
-function listFiles(auth) {
+// works - file listing with query
+function listFiles(auth, query) {
     var service = google.drive('v2');
     service.files.list({
         auth: auth,
-        //q: "mimeType='application/vnd.google-apps.folder'"
+        q: query
     }, function (err, response) {
         if (err) {
             console.log('The API returned an error: ' + err);
@@ -136,10 +137,12 @@ function listFiles(auth) {
                 
                 if (item.title === templateDirName) {
                     templateObj = item;
+                    console.log("Template Folder found!");
                 }
                 
                 if (item.title === contractDirName) {
                     contractObj = item;
+                    console.log("Contract Folder found!");
                 }
 
                 if (item.title == 'excel1') {
@@ -204,7 +207,7 @@ function updateFolderMetadata(auth, fileId) {
     });
 }
 
-// works
+// works - copy file from destination with specific filename
 function copyFile(auth, sourceFileId, targetFileId, fileName) {
     var service = google.drive('v2');
     getFileById(auth, sourceFileId, function (response) {
@@ -222,15 +225,14 @@ function copyFile(auth, sourceFileId, targetFileId, fileName) {
                 if (err) {
                     console.log('The API returned an error: ' + err);
                 } else {
-                
-                
+                    console.log("File copied!");
                 }
             });
         }
     });
 }
 
-// works
+// works - get file by id
 function getFileById(auth, fileId, callback) {
     var service = google.drive('v2');
     service.files.get({
@@ -243,6 +245,7 @@ function getFileById(auth, fileId, callback) {
             resp.error = err;
         } else {
             resp.success = response;
+            console.log("File by id found!");
         }
         
         callback(resp);
@@ -265,8 +268,9 @@ function listFilesInFolder(auth, folderId) {
     });
 }
 
-function whenReady(auth) {
-    listFiles(auth);
+function onAPIReady(auth) {
+    var query = "mimeType='application/vnd.google-apps.folder'";
+    listFiles(auth, "");
 
     //addFileInFolder(auth, 0);
 
