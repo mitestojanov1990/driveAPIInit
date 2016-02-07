@@ -102,6 +102,8 @@ var service = google.drive('v2');
 
 var rootDirName = 'apiTest';
 
+var emptyDirName = 'emptyFolder';
+
 var templateObj = {};
 var contractObj = {};
 
@@ -141,8 +143,10 @@ function getAllFiles(auth, query, callback) {
                     contractObj = item;
                     console.log("Contract Folder found!");
                 }
+                
 
                 if (contractObj.id != undefined && templateObj.id != undefined) {
+                    //copyFile(auth, tmpFile.id, contractObj.id, "test123");
                     break;
                 }
             }
@@ -169,6 +173,7 @@ function getContractChildrens(auth, parentId) {
         } else {
             contractChildrens = res.success;
             console.log('contract childrens found.');
+
         }
     });
 }
@@ -184,7 +189,7 @@ function getChildrens(auth, parentId, callback) {
             console.log('The API returned an error: ' + err);
             resp.error = err;
         } else {
-            console.log(items.length + ' children found.');
+            console.log(response.items.length + ' children found.');
             resp.success = response;
         }
         callback(resp);
@@ -202,34 +207,35 @@ function addFileInFolder(auth, parentId, folderName) {
         if (err) {
             console.log('The API returned an error: ' + err);
             return;
-        } else { 
+        } else {
             console.log('file created.');
+
         }
     });
 }
 
 // todo
 function updateFolderMetadata(auth, fileId) {
-    service.files.get({
-        auth: auth,
-        fileId: fileId
-    }, function (err, response) {
-        if (err) {
-            console.log('The API returned an error: ' + err);
-            return;
+    getFileById(auth, fileId, function (res) {
+        if (res.error != null) { 
+        
+        } else { 
+            var file = res.success;
+            file.mimeType = 'application/vnd.google-apps.folder';
+            
+            service.files.update({
+                auth: auth,
+                fileId: file.id,
+                resource: file
+            }, function (err, response) {
+                if (err) {
+                    console.log('The API returned an error: ' + err);
+                    return;
+                } else { 
+                
+                }
+            });
         }
-        response.mimeType = 'application/vnd.google-apps.folder';
-
-        service.files.update({
-            auth: auth,
-            fileId: fileId,
-            resource: response
-        }, function (err, response) {
-            if (err) {
-                console.log('The API returned an error: ' + err);
-                return;
-            }
-        });
 
     });
 }
@@ -312,8 +318,8 @@ function onAPIReady(auth) {
         }
     });
 
+    //updateFolderMetadata(auth, "");
 
-    //addFileInFolder(auth, 0);
+    //addFileInFolder(auth, contractObj.id, "mite-testing");
 
-    //copyFile(auth, "", "", "test123");
 }
