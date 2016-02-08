@@ -1,14 +1,20 @@
 {
-  "name": "Gdrive",
-  "version": "0.0.0",
-  "description": "Gdrive",
-  "main": "app.js",
-  "author": {
-    "name": "stoja",
-    "email": ""
-  },
-  "dependencies": {
-    "google-auth-library": "^0.9.7",
-    "googleapis": "^2.1.7"
-  }
+    "name": "Gdrive",
+    "version": "0.0.0",
+    "description": "Gdrive",
+    "main": "app.js",
+    "author": {
+        "name": "stoja",
+        "email": ""
+    },
+    "devDependencies": {
+        "restify": "^4.0.3",
+        "restify-cookies": "^0.2.0",
+        "restify-memory-session": "0.0.6"
+    },
+    "dependencies": {
+        "restify-session": "^1.1.1",
+        "google-auth-library": "^0.9.7",
+        "googleapis": "^2.1.7"
+    }
 }
