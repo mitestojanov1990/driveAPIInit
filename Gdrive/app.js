@@ -384,8 +384,9 @@ function onAPIReady(auth) {
         if (res.error != null) { 
         
         } else {
+            addFileInFolder(auth, templateObj.id, "test123456", function (result) { });
             //getTemplateChildrens(auth, templateObj.id, function (result) { });
-            getContractChildrens(auth, templateObj.id, function (result) { });
+            //getContractChildrens(auth, templateObj.id, function (result) { });
         }
     });
 
@@ -521,7 +522,7 @@ server.post('/gdrive/files/pdf/:documentid/:contractid', function (req, res, nex
     return next();
 });
 
-server.listen(3000, function () {
+server.listen(3001, function () {
     console.log('%s listening at %s', server.name, server.url);
 });
 
